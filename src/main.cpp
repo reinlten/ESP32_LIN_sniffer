@@ -265,6 +265,16 @@ const char* interpretLightCode(uint8_t b0, uint8_t b1) {
   if (b0 == 0x47 && b1 == 0xCB) return "Abbl";
   if (b0 == 0x46 && b1 == 0xCB) return "Abbl_N1";
   if (b0 == 0x42 && b1 == 0xCB) return "Abbl_N1_N2";
+  if (b0 == 0xEF && b1 == 0xC2) return "Plinks (Entsp.)";
+  if (b0 == 0xED && b1 == 0xC3) return "Prechts (Entsp.)";
+  if (b0 == 0xEF && b1 == 0xC1) return "0 (Entsp.)";
+  if (b0 == 0x2F && b1 == 0xC3) return "Auto (Entsp.)";
+  if (b0 == 0xE7 && b1 == 0xC3) return "St (Entsp.)";
+  if (b0 == 0xE6 && b1 == 0xC3) return "St_N1 (Entsp.)";
+  if (b0 == 0xE2 && b1 == 0xC3) return "St_N1_N2 (Entsp.)";
+  if (b0 == 0x47 && b1 == 0xC3) return "Abbl (Entsp.)";
+  if (b0 == 0x46 && b1 == 0xC3) return "Abbl_N1 (Entsp.)";
+  if (b0 == 0x42 && b1 == 0xC3) return "Abbl_N1_N2 (Entsp.) [?? KI GEN!]";
   return "Unbekannt";
 }
 
