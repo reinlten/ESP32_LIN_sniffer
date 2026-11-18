@@ -1,39 +1,39 @@
 # ESP32 LIN Sniffer
 
-Ein PlatformIO-Projekt für einen ESP32-WROOM, das einen LIN-Bus mit 19.200 Baud beobachtet. Es erkennt LIN-Frames, meldet alle zwei Sekunden den Busstatus und – für LIN-ID `0x04` – die letzten zwei Datenbytes. Zusätzlich misst es die Batteriespannung und kann die Messwerte auf einer SD-Karte protokollieren.
+A PlatformIO project for an ESP32-WROOM that monitors a LIN bus at 19,200 baud. It detects LIN frames, reports the bus status every two seconds, and records the last two data bytes for LIN ID `0x04`. It also measures the battery voltage and can log the readings to an SD card.
 
-## Prototyp
+## Prototype
 
-![Aufbau des ESP32-LIN-Sniffer-Prototyps](assets/lin-sniffer-prototype.jpeg)
+![ESP32 LIN sniffer prototype setup](assets/lin-sniffer-prototype.jpeg)
 
-## Funktionen
+## Features
 
-- Empfang und Auswertung von LIN-Frames (Break, Sync, PID und Daten).
-- Erkennung, ob LIN-Verkehr vorhanden ist und ob ein Frame mit der Ziel-ID `0x04` empfangen wurde.
-- Zuordnung der beiden ersten Datenbytes der Ziel-ID zu bekannten Lichtzuständen.
-- Batteriespannungsmessung über den ADC, gemittelt aus acht Messungen.
-- Ausgabe des Status über die serielle Schnittstelle und optionales Logging im Zwei-Sekunden-Takt auf SD-Karte.
+- Receives and parses LIN frames (break, sync, PID, and data).
+- Detects LIN bus activity and whether a frame with target ID `0x04` was received.
+- Maps the first two data bytes of the target ID to known lighting states.
+- Measures battery voltage through the ADC, averaging eight readings.
+- Reports status over the serial interface and optionally logs to an SD card every two seconds.
 
-## Hardware und Anschlüsse
+## Hardware and connections
 
-| ESP32-Pin | Anschluss | Hinweise |
+| ESP32 pin | Connection | Notes |
 | --- | --- | --- |
-| GPIO 4 | LIN-Empfang | An den RXD-Ausgang eines geeigneten LIN-Transceivers anschließen. |
-| GPIO 34 | Batteriespannung | ADC-Eingang hinter dem Spannungsteiler. |
-| GPIO 5 | SD-Karte CS | Chip-Select für die SD-Karte. |
-| GPIO 18 | SD-Karte SCK | VSPI-Takt (Standardbelegung). |
-| GPIO 19 | SD-Karte MISO | VSPI-Daten vom SD-Modul. |
-| GPIO 23 | SD-Karte MOSI | VSPI-Daten zum SD-Modul. |
+| GPIO 4 | LIN receive | Connect to the RXD output of a suitable LIN transceiver. |
+| GPIO 34 | Battery voltage | ADC input after the voltage divider. |
+| GPIO 5 | SD card CS | Chip-select for the SD card. |
+| GPIO 18 | SD card SCK | VSPI clock (default pin assignment). |
+| GPIO 19 | SD card MISO | Data from the SD module over VSPI. |
+| GPIO 23 | SD card MOSI | Data to the SD module over VSPI. |
 
-LIN ist ein Fahrzeugbus mit Spannungen und elektrischen Störungen, die einen ESP32 beschädigen können. Den LIN-Bus **nicht direkt** mit einem ESP32-Pin verbinden. Ein geeigneter LIN-Transceiver muss den Buspegel in ein ESP32-kompatibles RX-Signal umsetzen; ESP32 und Transceiver benötigen eine gemeinsame Masse.
+LIN is an automotive bus whose voltages and electrical transients can damage an ESP32. **Do not connect the LIN bus directly** to an ESP32 pin. Use a suitable LIN transceiver to convert the bus signal to an ESP32-compatible RX signal; the ESP32 and transceiver must share a common ground.
 
-Der Spannungsteiler für die Batteriespannung ist laut Schaltungskommentar als `VIN — 22 kΩ — GPIO 34 — 5,6 kΩ — GND` vorgesehen. Die Software verwendet für die Berechnung die Werte 21,7 kΩ und 5,5 kΩ. Die ADC-Spannung muss innerhalb des zulässigen ESP32-Eingangsbereichs bleiben. Vor dem Anschluss die maximale Eingangsspannung und die tatsächlichen Widerstandswerte prüfen.
+The battery voltage divider is described in the source as `VIN — 22 kΩ — GPIO 34 — 5.6 kΩ — GND`. The software uses resistor values of 21.7 kΩ and 5.5 kΩ for its calculation. The ADC voltage must remain within the ESP32's permitted input range. Check the maximum input voltage and the actual resistor values before connecting the circuit.
 
-Ein SD-Modul sollte mit dem ESP32 kompatibel sein und an die VSPI-Pins sowie an GPIO 5 als CS angeschlossen werden.
+Use an SD module compatible with the ESP32, connected to the VSPI pins with GPIO 5 as CS.
 
-## Bauen und Flashen
+## Build and upload
 
-Voraussetzung ist [PlatformIO](https://platformio.org/) mit installierter ESP32-Plattform. Die Projektumgebung `upesy_wroom` ist in `platformio.ini` konfiguriert.
+You need [PlatformIO](https://platformio.org/) with the ESP32 platform installed. The `upesy_wroom` environment is configured in `platformio.ini`.
 
 ```sh
 pio run
@@ -41,22 +41,22 @@ pio run --target upload
 pio device monitor
 ```
 
-Der serielle Monitor verwendet `115200` Baud. Der LIN-Empfang ist auf `19200` Baud eingestellt.
+The serial monitor uses `115200` baud. LIN reception is configured for `19200` baud.
 
-## Ausgabe und SD-Logging
+## Output and SD card logging
 
-Nach dem Start zeigt die serielle Schnittstelle die Konfiguration. Anschließend wird alle zwei Sekunden eine Statuszeile ausgegeben, zum Beispiel mit LIN- und Lichtstatus, den letzten erkannten Datenbytes und der Batteriespannung. Die angezeigten Lichtzustände werden anhand einer im Programm hinterlegten Byte-Tabelle interpretiert; nicht bekannte Kombinationen erscheinen als `Unbekannt`.
+At startup, the serial interface prints the configuration. It then outputs a status line every two seconds, including LIN and lighting status, the most recently received data bytes, and the battery voltage. Lighting states are interpreted using a byte table in the source; unrecognized combinations are shown as `Unknown`.
 
-Wenn eine SD-Karte initialisiert wurde, erstellt das Programm die erste freie Datei von `/lin_0001.txt` bis `/lin_9999.txt`. Vorhandene Dateien werden nicht überschrieben. Jede Datei beginnt mit der Kopfzeile:
+If an SD card is initialized, the program creates the first available file from `/lin_0001.txt` through `/lin_9999.txt`. Existing files are not overwritten. Each file starts with this header (the labels are written as shown):
 
 ```text
 Nr LIN Licht Data0 Data1 Interpr Batt_V
 ```
 
-Die folgenden Zeilen sind durch Leerzeichen getrennt. `LIN` und `Licht` sind `1` (erkannt) oder `0` (nicht erkannt); `Data0`, `Data1` und `Interpr` enthalten die letzten Daten der Ziel-ID. Wenn keine passenden Daten im Zeitfenster empfangen wurden, stehen dort `--`. `Batt_V` enthält die Batteriespannung in Volt mit zwei Nachkommastellen. Bei fehlgeschlagener SD-Initialisierung läuft die serielle Statusausgabe weiter, das SD-Logging ist dann deaktiviert.
+The following rows are space-separated. `Nr` is the line number; `LIN` and `Licht` are `1` (detected) or `0` (not detected); `Data0`, `Data1`, and `Interpr` contain the latest data for the target ID. If no matching data was received during the time window, these fields contain `--`. `Batt_V` contains the battery voltage in volts to two decimal places. If SD initialization fails, serial status output continues but SD logging is disabled.
 
-## Projektstruktur
+## Project structure
 
-- `src/main.cpp` – LIN-Empfang, Auswertung, Batteriespannungsmessung und Logging.
-- `platformio.ini` – PlatformIO-Konfiguration.
-- `include/`, `lib/`, `test/` – vorgesehene PlatformIO-Verzeichnisse für Header, private Bibliotheken und Tests.
+- `src/main.cpp` – LIN reception and parsing, battery voltage measurement, and logging.
+- `platformio.ini` – PlatformIO configuration.
+- `include/`, `lib/`, `test/` – PlatformIO directories for headers, private libraries, and tests.
